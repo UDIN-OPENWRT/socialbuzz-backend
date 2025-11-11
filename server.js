@@ -1,55 +1,35 @@
 import express from "express";
-
 const app = express();
-const PORT = process.env.PORT || 10000;
-const WEBHOOK_SECRET = "sbwhook-lix9tqznbsgkol0dvm4o3r6e"; // Token kamu dari SocialBuzz
-
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
 
-// Root untuk cek server
-app.get("/", (req, res) => {
-  res.send("✅ SocialBuzz Webhook Backend Aktif & Siap Menerima!");
-});
+// Simpan data donasi terakhir di memori sementara
+let lastDonation = {
+  username: "Belum Ada",
+  amount: 0,
+  message: "Menunggu donasi pertama..."
+};
 
-// Webhook utama
+// ✅ Endpoint SocialBuzz Webhook (POST)
 app.post("/webhook/socialbuzz", (req, res) => {
-  // Coba ambil token dari semua kemungkinan lokasi
-  const headerToken = req.headers["x-webhook-token"];
-  const authHeader = req.headers["authorization"];
-  const bodyToken = req.body?.token || req.body?.webhook_token;
-  const queryToken = req.query?.token;
+  const body = req.body;
 
-  const token = headerToken || authHeader || bodyToken || queryToken;
+  console.log("Webhook diterima:", body);
 
-  console.log("========== 🔍 DEBUG TOKEN ==========");
-  console.log("Header:", req.headers);
-  console.log("Body:", req.body);
-  console.log("Query:", req.query);
-  console.log("Token diterima:", token);
-  console.log("====================================");
-
-  // Verifikasi token
-  if (!token || token.trim() !== WEBHOOK_SECRET.trim()) {
-    console.log("❌ TOKEN SALAH ATAU TIDAK ADA");
-    return res.status(403).json({
-      success: false,
-      message: "Token invalid",
-      received: token,
-      expected: WEBHOOK_SECRET,
-    });
+  // Simpan data ke variabel sementara
+  if (body.username && body.amount) {
+    lastDonation = {
+      username: body.username,
+      amount: Number(body.amount) || 0,
+      message: body.message || "Tanpa pesan"
+    };
   }
 
-  console.log("✅ TOKEN VALID!");
-  console.log("📨 PAYLOAD:", JSON.stringify(req.body, null, 2));
-
-  res.status(200).json({
-    success: true,
-    message: "Webhook received successfully",
-  });
+  res.json({ success: true });
 });
 
-app.listen(PORT, () => {
-  console.log(`🚀 Server berjalan di port ${PORT}`);
-  console.log("🌍 URL aktif: https://socialbuzz-backend.onrender.com");
+// ✅ Endpoint untuk Roblox (GET)
+app.get("/webhook/socialbuzz", (req, res) => {
+  res.json(lastDonation);
 });
+
+app.listen(3000, () => console.log("✅ Webhook aktif di port 3000"));
