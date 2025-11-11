@@ -1,29 +1,37 @@
-// ==============================
-// 🌐 SocialBuzz Webhook Backend (Render / Node.js)
-// ==============================
-
 import express from "express";
 import bodyParser from "body-parser";
 
 const app = express();
 app.use(bodyParser.json());
 
-// ===== Konfigurasi =====
+// Konfigurasi
 const PORT = process.env.PORT || 10000;
-const WEBHOOK_SECRET = process.env.WEBHOOK_SECRET || "sbwhook-lix9tqznbsgkol0dvm4o3r6e"; // ganti sesuai token SocialBuzz kamu
+const WEBHOOK_SECRET = process.env.WEBHOOK_SECRET || "sbwhook-lix9tqznbsgkol0dvm4o3r6e";
 
-// ===== Route tes =====
+// Route tes
 app.get("/", (req, res) => {
   res.send("✅ Webhook SocialBuzz aktif dan berjalan!");
 });
 
-// ===== Route webhook utama =====
+// Webhook utama
 app.post("/webhook/socialbuzz", (req, res) => {
   try {
-    // Bisa token dari header atau body
-    const headerToken = req.headers["x-webhook-token"];
-    const bodyToken = req.body.webhook_token;
+    // Tangkap token dari berbagai kemungkinan lokasi
+    const headerToken =
+      req.headers["x-webhook-token"] ||
+      req.headers["authorization"] ||
+      req.headers["webhook-token"];
+    const bodyToken =
+      req.body?.webhook_token ||
+      req.body?.token ||
+      req.query?.token;
+
     const token = headerToken || bodyToken;
+
+    // Debug log agar kita tahu token dari SocialBuzz
+    console.log("📦 HEADER:", req.headers);
+    console.log("📦 BODY:", req.body);
+    console.log("📦 Token diterima:", token);
 
     // Verifikasi token
     if (!token || token !== WEBHOOK_SECRET) {
@@ -31,11 +39,10 @@ app.post("/webhook/socialbuzz", (req, res) => {
       return res.status(403).json({ success: false, message: "Token invalid" });
     }
 
-    // Jika valid, tampilkan data dari SocialBuzz
-    console.log("📩 Webhook diterima dari SocialBuzz:");
+    // Jika valid
+    console.log("✅ Webhook diterima dan token valid!");
     console.log(JSON.stringify(req.body, null, 2));
 
-    // Kirim respon sukses ke SocialBuzz
     res.status(200).json({ success: true });
   } catch (err) {
     console.error("🔥 Error webhook:", err);
@@ -43,7 +50,7 @@ app.post("/webhook/socialbuzz", (req, res) => {
   }
 });
 
-// ===== Jalankan server =====
+// Jalankan server
 app.listen(PORT, () => {
   console.log(`🚀 Server berjalan di port ${PORT}`);
 });
