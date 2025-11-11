@@ -5,7 +5,7 @@ const app = express();
 app.use(bodyParser.json());
 
 // Token rahasia untuk verifikasi SocialBuzz
-const WEBHOOK_SECRET = process.env.WEBHOOK_SECRET || "my-secret-token";
+const WEBHOOK_SECRET = process.env.WEBHOOK_SECRET || "sbwhook-lix9tqznbsgkol0dvm4o3r6e";
 
 // Endpoint test
 app.get("/", (req, res) => {
@@ -27,3 +27,4 @@ app.post("/webhook/socialbuzz", (req, res) => {
 
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => console.log(`🚀 Server berjalan di port ${PORT}`));
+
