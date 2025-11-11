@@ -1,45 +1,55 @@
-// server.js
 import express from "express";
 
 const app = express();
 const PORT = process.env.PORT || 10000;
-const WEBHOOK_SECRET = "sbwhook-lix9tqznbsgkol0dvm4o3r6e";
+const WEBHOOK_SECRET = "sbwhook-lix9tqznbsgkol0dvm4o3r6e"; // Token kamu dari SocialBuzz
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// ✅ Tes server aktif
+// Root untuk cek server
 app.get("/", (req, res) => {
-  res.send("✅ SocialBuzz backend aktif");
+  res.send("✅ SocialBuzz Webhook Backend Aktif & Siap Menerima!");
 });
 
-// ✅ Endpoint Webhook
+// Webhook utama
 app.post("/webhook/socialbuzz", (req, res) => {
-  // Ambil token dari 3 tempat berbeda
+  // Coba ambil token dari semua kemungkinan lokasi
   const headerToken = req.headers["x-webhook-token"];
-  const bodyToken = req.body?.webhook_token;
+  const authHeader = req.headers["authorization"];
+  const bodyToken = req.body?.token || req.body?.webhook_token;
   const queryToken = req.query?.token;
 
-  const token = headerToken || bodyToken || queryToken;
+  const token = headerToken || authHeader || bodyToken || queryToken;
 
-  console.log("📦 HEADER:", req.headers);
-  console.log("📦 BODY:", req.body);
-  console.log("📦 Query:", req.query);
-  console.log("📦 Token diterima:", token);
+  console.log("========== 🔍 DEBUG TOKEN ==========");
+  console.log("Header:", req.headers);
+  console.log("Body:", req.body);
+  console.log("Query:", req.query);
+  console.log("Token diterima:", token);
+  console.log("====================================");
 
   // Verifikasi token
-  if (!token || token !== WEBHOOK_SECRET) {
-    console.log("❌ Token salah atau tidak ada!");
-    return res.status(403).json({ success: false, message: "Token invalid" });
+  if (!token || token.trim() !== WEBHOOK_SECRET.trim()) {
+    console.log("❌ TOKEN SALAH ATAU TIDAK ADA");
+    return res.status(403).json({
+      success: false,
+      message: "Token invalid",
+      received: token,
+      expected: WEBHOOK_SECRET,
+    });
   }
 
-  console.log("✅ Webhook diterima dan token valid!");
-  console.log("📨 Payload:", JSON.stringify(req.body, null, 2));
+  console.log("✅ TOKEN VALID!");
+  console.log("📨 PAYLOAD:", JSON.stringify(req.body, null, 2));
 
-  res.status(200).json({ success: true });
+  res.status(200).json({
+    success: true,
+    message: "Webhook received successfully",
+  });
 });
 
 app.listen(PORT, () => {
   console.log(`🚀 Server berjalan di port ${PORT}`);
-  console.log("🌍 URL aktif:", `https://socialbuzz-backend.onrender.com`);
+  console.log("🌍 URL aktif: https://socialbuzz-backend.onrender.com");
 });
